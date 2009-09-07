@@ -121,73 +121,84 @@
   *current-call*)
 
 
-(defmulti state __single-dispatch)
-(defmethod state :tropo-call [call]
+(defn state [call]
   (.getState (:_call_ call)))
 
 
-(defmulti is-active __single-dispatch)
-(defmethod is-active :tropo-call [call]
+(defn is-active [call]
   (.isActive (:_call_ call)))
 
-(defmulti redirect __single-dispatch)
-(defmethod redirect :tropo-call [call too]
-  (.redirect (:_call_ call) too))
-(defmethod redirect :default [too]
-  (redirect (current-call) too))
+
+(defn redirect
+  ([too]
+   (redirect (current-call) too))
+  ([call too]
+   (.redirect (:_call_ call) too)))
 
 
-(defmulti answer __single-dispatch)
-(defmethod answer :tropo-call [call timeout]
-  (.answer (:_call_ call)
-	   (if (or (not timeout) (= nil timeout))
-	     30
-	     (* timeout 1000))))
-
-(defmulti reject __single-dispatch)
-(defmethod reject :tropo-call [call]
-  (.reject (:_call_ call)))
-
-(defmulti hangup __single-dispatch)
-(defmethod hangup :tropo-call [call]
-  (.hangup (:_call_ call)))
+(defn answer
+  ([timeout]
+   (if (current-call)
+     (answer (current-call) timeout)))
+  ([call timeout]
+   (.answer (:_call_ call)
+	    (if (or (not timeout) (= nil timeout))
+	      30
+	      (* timeout 1000)))))
 
 
-(defmulti start-call-recording __single-dispatch)
-(defmethod start-call-recording :tropo-call [call uri format key key-uri]
-  (let [format  (or format "audio/wav")
-	key     (or key "")
-	key-uri (or key-uri "")]
-    (.startCallRecording (:_call_ call) uri format key key-uri)))
+(defn reject
+  ([]
+   (reject (current-call)))
+  ([call]
+   (.reject (:_call_ call))))
 
 
-(defmulti stop-call-recording __single-dispatch)
-(defmethod stop-call-recording :tropo-call [call]
-  (.stopCallRecording (:_call_ call)))
+(defn hangup
+  ([]
+   (hangup (current-call)))
+  ([call]
+   (.hangup (:_call_ call))))
 
 
-(defmethod log :tropo-call [call msg]
-  (.log (:_call_ call) msg))
+(defn start-call-recording
+  ([uri format key key-uri]
+   (if (current-call)
+     (start-call-recording (current-call) uri format key key-uri)))
+  ([call uri format key key-uri]
+   (let [format  (or format "audio/wav")
+	 key     (or key "")
+	 key-uri (or key-uri "")]
+     (.startCallRecording (:_call_ call) uri format key key-uri))))
 
-(defmethod log :default [msg]
-  (if (and (current-call) (is-active (current-call)))
-    (log (current-call) msg)
-    (.log appInstance msg)))
+
+(defn stop-call-recording
+  ([]
+   (if (current-call)
+     (stop-call-recording (current-call))))
+  ([call]
+   (.stopCallRecording (:_call_ call))))
 
 
-(defmulti wait __single-dispatch)
-(defmethod wait :tropo-call [call milliseconds]
-  (print "1.")
-  (.block (:_call_ call) 
-	  (if (or (= milliseconds 0) (= nil milliseconds))
-	    0
-	    milliseconds)))
+(defn log
+  ([msg]
+   (if (and (current-call) (is-active (current-call)))
+     (log (current-call) msg)
+     (.log appInstance msg)))
+  ([call msg]
+   (.log (:_call_ call) msg)))
 
-(defmethod wait :default [milliseconds]
-  (print "2.")
-  (if (and (current-call) (is-active (current-call)))
-    (wait (current-call) milliseconds)
-    (.block appInstance milliseconds)))
+
+(defn wait
+  ([milliseconds]
+   (if (and (current-call) (is-active (current-call)))
+     (wait (current-call) milliseconds)
+     (.block appInstance milliseconds))) 
+  ([call milliseconds]
+   (.block (:_call_ call) 
+	   (if (or (= milliseconds 0) (= nil milliseconds))
+	     0
+	     milliseconds))))
 
 
 ;;;
@@ -195,8 +206,7 @@
 ;;;
 
 
-(defmulti transfer __single-dispatch)
-(defmethod transfer :tropo-call [call too options]
+(defn transfer [call too options]
   (defmacro __get-option [key default]
     `(if (contains? options ~key)
        (~key options)
@@ -253,8 +263,7 @@
 ;;;
 
 
-(defmulti prompt __single-dispatch)
-(defmethod prompt :tropo-call [call too options]
+(defn prompt [call too options]
   (let [tts-or-url         (or too "")
 	options            (or options {})
 	grammar            (or (:grammar options) "")
@@ -404,20 +413,28 @@
      
 		
 	   
-(defmulti say __single-dispatch)
-(defmethod say :tropo-call [call tts]
-  (prompt call tts {}))
+(defn say
+  ([tts]
+   (say (current-call) tts))
+  ([call tts]
+   (prompt call tts {})))
 
-(defmulti ask __single-dispatch)
-(defmethod ask :tropo-call [call tts options]
-  (prompt call tts options))
 
-(defmulti record __single-dispatch)
-(defmethod record :tropo-call [call tts options]
-  (prompt call
-	  tts
-	  (if (= nil options)
-	    {:repeat 1 :record true :beep true :silenceTimeout 3 :maxTime 30 :timeout 30}
-	    (assoc options :record true))))
+(defn ask
+  ([tts options]
+   (ask (current-call) tts options))
+  ([call tts options]
+   (prompt call tts options)))
+
+
+(defn record 
+  ([tts options]
+   (record (current-call) tts options))
+  ([call tts options]
+   (prompt call
+	   tts
+	   (if (= nil options)
+	     {:repeat 1 :record true :beep true :silenceTimeout 3 :maxTime 30 :timeout 30}
+	     (assoc options :record true)))))
 
 
