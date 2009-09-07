@@ -4,19 +4,16 @@
 ;;
 ;; Author: Dominique Boucher
 ;; 
+;; This script requires the following variables to be defined:
+;;  - appInstance
+;;  - incomingCall
+;;  - 
 
 ;; A few utility functions
 
 (defn _parse-time [time]
   (Math/max 0 (.intValue (* time 1000))))
 
-(defn __single-dispatch [& rest]
-  (if (empty? rest)
-    :default
-    (:Type (first rest))))
-
-
-(defmulti log __single-dispatch)
 
 (defn _try-callback [cb ev]
   (try (if cb
@@ -25,6 +22,11 @@
 	   (apply cb '())))
        (catch Exception e
 	      (log (.concat " ---- Callback error: " (.getMessage e))))))
+
+
+;;;
+;;;; Tropo choice result
+;;;
 
 
 (defn tropo-choice [concept interp conf xml utterance]
@@ -49,14 +51,14 @@
    :choice choice})
 
 (defn on-choice [event expected callback]
-  (if (and(= (:name event) "choice")
-	  (= (:value event) expected))
-      (_try-callback callback false))))
+  (if (and (= (:name event) "choice")
+	   (= (:value event) expected))
+    (_try-callback callback false)))
 
 (defn on-bad-choice [event callback]
   (if (and (= (:name event) "choice")
 	   (= (:value event) "nomatch"))
-      (_try-callback callback false))))
+    (_try-callback callback false)))
 
 (defn on-timeout [event callback]
   (if (= (:name event) "timeout")
@@ -225,7 +227,7 @@
 	on-timeout       (:on-timeout options)
 	on-call-failure  (:on-call-failure options)
 	on-choice        (:on-choice options)]
-
+    (try (let [call  (make-tropo-call (.transfer (:_call_ self) too caller-id answer-on-media timeout play-value play-repeat choices))
 	       event (make-prompt-event "transfer" call nil nil)]
 	   (_try-callback on-success event)
 	   event)
@@ -411,8 +413,6 @@
 		  (throw exception))))))
 
      
-		
-	   
 (defn say
   ([tts]
    (say (current-call) tts))
