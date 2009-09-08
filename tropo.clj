@@ -90,9 +90,7 @@
        (answer (current-call) timeout)))
   ([call timeout]
    (.answer (:_call_ call)
-            (if (or (not timeout) (= nil timeout))
-                30
-                (* timeout 1000)))))
+           (or timeout 30000))))
 
 
 (defn reject
@@ -271,9 +269,9 @@
         options            (or options {})
         grammar            (or (:grammar options) "")
         on-choices         (:on-choices options)
-        timeout            (_parse-time (or (:timeout options) "3000"))
+        timeout            (_parse-time (or (:timeout options) 3000))
         on-timeout         (:on-timeout options)
-        repeat             (:repeat options)
+        repeat             (or (:repeat options) 1)
         on-error           (:on-error options)
         on-event           (:on-event options)
         on-hangup          (:on-hangup options)
@@ -283,8 +281,8 @@
         choice-mode        (or (:choice-mode options) "any")
         record             (if (contains? options :record) (:record options) false)
         beep               (if (contains? options :beep) (:beep options) true)
-        silence-timeout    (_parse-time (or (:silence-timeout options) "5000"))
-        max-time           (_parse-time (or (:max-time options) "30000"))
+        silence-timeout    (_parse-time (or (:silence-timeout options) 5))
+        max-time           (_parse-time (or (:max-time options) 30))
         on-silence-timeout (:on-silence-timeout options)
         on-record          (:on-record options)
         record-uri         (or (:record-uri options) "")
@@ -295,7 +293,8 @@
           (if (< repeat 0)
               event
               (let [event
-                    (try (if record
+                    (try
+                     (if record
                              ;; Record (and maybe prompt)
                              (let [result (.promptWithRecord (:_call_ call) tts-or-url bargein grammar choice-confidence choice-mode timeout record beep max-time silence-timeout record-uri record-format http-method)
                                    event (make-prompt-event "record" (.get result "recordURL") (.get result "recordURL") nil)]
@@ -311,7 +310,7 @@
                                     (_try-callback on-event event)
                                     event)))
                              ;; Just prompt
-                             (let [result (.prompt (:_call_ call) tts-or-url grammar choice-confidence choice-mode timeout)
+                             (let [result (.prompt (:_call_ call) tts-or-url bargein grammar choice-confidence choice-mode timeout)
                                    choice (tropo-choice (.get result "concept") (.get result "interpretation")
                                                         (.get result "confidence") (.get result "xml") (.get result "utterance"))
                                    event  (make-prompt-event "choice" (.get result "value") (.get result "recordURL") choice)]
@@ -377,7 +376,7 @@
   (let [options         (or options {})
         caller-id       (or (:caller-id options) "sip:Tropo@10.6.69.201")
         answer-on-media (if (contains? options :answer-on-media) (:answer-on-media options) false)
-        timeout         (_parse-time (or (:timeout options) "30000"))
+        timeout         (_parse-time (or (:timeout options) 30))
         on-answer       (:on-answer options)
         on-error        (:on-error options)
         on-timeout      (:on-timeout options)
@@ -446,3 +445,10 @@
                (assoc options :record true)))))
 
 
+;; test script
+;;(answer 2000)
+;;(log "Answered call..")
+;;(ask "hello"
+;;     {:on-choices (fn [] (log "bye"))
+;;      :on-event (fn [event] (log "got an event"))})
+;;(hangup)
