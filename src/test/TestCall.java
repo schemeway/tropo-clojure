@@ -7,22 +7,22 @@ public class TestCall
 {
     public String getCallerId()
     {
-        return "dominique";
+        return "caller";
     }
 
     public String getCalledId()
     {
-        return "jason";
+        return "called";
     }
 
     public String getCallerName()
     {
-        return "Dominique Boucher";
+        return "The Caller";
     }
 
     public String getCalledName()
     {
-        return "Jason Goecke";
+        return "The Callee";
     }
     
     public boolean isActive()
