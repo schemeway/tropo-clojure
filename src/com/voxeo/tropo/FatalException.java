@@ -1,5 +1,6 @@
 package com.voxeo.tropo;
 
+@SuppressWarnings("serial")
 public class FatalException extends RuntimeException
 {
 

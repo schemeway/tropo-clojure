@@ -49,7 +49,8 @@ public class TestCall
     {
         log("[PROMPT] '" + ttsOrUrl + "'");
         
-        Map result = new HashMap();
+        Map<String, String> result = new HashMap<String, String>();
+        
         result.put("concept", "concept-value");
         result.put("interpretation", "interpretation-value");
         result.put("confidence", "1.0");
