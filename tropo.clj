@@ -268,7 +268,7 @@
   (let [tts-or-url         (or too "")
         options            (or options {})
         grammar            (or (:grammar options) "")
-        on-choices         (:on-choices options)
+        on-choice          (:on-choice options)
         timeout            (_parse-time (or (:timeout options) 3000))
         on-timeout         (:on-timeout options)
         repeat             (or (:repeat options) 1)
@@ -303,7 +303,7 @@
                                    (let [choice (tropo-choice (.get result "concept") (.get result "interpretation")
                                                               (.get result "confidence") (.get result "xml") (.get result "utterance"))
                                          event  (make-prompt-event "choice" (.get result "value") (.get result "recordURL") choice)]
-                                     (_try-callback on-choices event)
+                                     (_try-callback on-choice event)
                                      (_try-callback on-event event)
                                      event)
                                    (do
@@ -314,7 +314,7 @@
                                    choice (tropo-choice (.get result "concept") (.get result "interpretation")
                                                         (.get result "confidence") (.get result "xml") (.get result "utterance"))
                                    event  (make-prompt-event "choice" (.get result "value") (.get result "recordURL") choice)]
-                               (_try-callback on-choices event)
+                               (_try-callback on-choice event)
                                (_try-callback on-event event)
                                event))
 
